@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -112,7 +113,7 @@ private fun IntervalSelector(viewModel: TimeAnnouncerViewModel) {
     val selectedInterval by viewModel.selectedInterval.collectAsState()
 
     Column {
-        Text("Intervalo de anuncio:", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(R.string.intervalo_de_anuncio), style = MaterialTheme.typography.titleSmall)
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -141,9 +142,9 @@ private fun IntervalButton(interval: Int, isSelected: Boolean, onSelect: () -> U
     ) {
         Text(
             text = when (interval) {
-                1 -> "1 minuto"
-                60 -> "1 hora"
-                else -> "$interval minutos"
+                1 -> stringResource(R.string._1_minuto)
+                60 -> stringResource(R.string._1_hora)
+                else -> stringResource(R.string.minutos, interval)
             },
             color = if (isSelected) MaterialTheme.colorScheme.onPrimary
             else MaterialTheme.colorScheme.onSurface
@@ -170,12 +171,14 @@ private fun DigitalClockDisplay(viewModel: TimeAnnouncerViewModel , context : Co
                tts = TextToSpeech(context) { status ->
                    if (status == TextToSpeech.SUCCESS) {
                        tts?.language = Locale.getDefault()
-                       tts?.speak("Son las $currentTime", TextToSpeech.QUEUE_FLUSH, null, null)
+                       tts?.speak(context.getString(R.string.son_las, currentTime), TextToSpeech.QUEUE_FLUSH, null, null)
                    }
                }
 
                       },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 24.dp),
             shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.surfaceVariant,
             tonalElevation = 4.dp
@@ -246,8 +249,8 @@ private fun ServiceControls(
             )
         ) {
             Text(
-                text = if (serviceRunning) "DETENER SERVICIO"
-                else "INICIAR SERVICIO",
+                text = if (serviceRunning) stringResource(R.string.detener_servicio)
+                else stringResource(R.string.iniciar_servicio),
                 style = MaterialTheme.typography.bodyLarge
             )
         }
@@ -259,7 +262,7 @@ private fun ServiceControls(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "Mantener dispositivo activo",
+                text = stringResource(R.string.mantener_dispositivo_activo),
                 style = MaterialTheme.typography.bodyMedium
             )
             Switch(

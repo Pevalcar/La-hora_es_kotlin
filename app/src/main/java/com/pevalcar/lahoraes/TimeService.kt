@@ -88,8 +88,8 @@ class TimeService : Service() {
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, "time_channel")
             .setSmallIcon(R.drawable.ic_launcher_foreground) // Ensure this icon exists
-            .setContentTitle("Anunciador activo - ${TimeSettingsRepository.getInterval()} min")
-            .setContentText("Próximo anuncio: ${calculateNextAnnouncementTime()}")
+            .setContentTitle(getString(R.string.anunciador_de_hora_activo))
+            .setContentText(getString(R.string.pr_ximo_anuncio,calculateNextAnnouncementTime()))
             // ... (resto de la configuración igual)
             .build()
     }
@@ -134,8 +134,8 @@ class TimeService : Service() {
 
     private fun startForeground() {
         val notification = NotificationCompat.Builder(this, "time_channel")
-            .setContentTitle("Anunciador de hora activo")
-            .setContentText("Próximo anuncio: ${calculateNextAnnouncementTime()}")
+            .setContentTitle(getString(R.string.anunciador_de_hora_activo))
+            .setContentText(getString(R.string.pr_ximo_anuncio, calculateNextAnnouncementTime()))
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true) // Hacerla no descartable
@@ -177,7 +177,7 @@ class TimeService : Service() {
                 "Anuncios de hora",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Canal para anuncios periódicos de hora"
+                description = getString(R.string.canal_para_anuncios_peri_dicos_de_hora)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
             val manager = getSystemService(NotificationManager::class.java)
@@ -194,7 +194,7 @@ class TimeService : Service() {
     }
 
     private fun speakTime(time: String) {
-        tts?.speak("Son las $time", TextToSpeech.QUEUE_FLUSH, null, null)
+        tts?.speak(getString(R.string.son_las, time), TextToSpeech.QUEUE_FLUSH, null, null)
     }
 
     override fun onDestroy() {

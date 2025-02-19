@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">The Time Is</string>
+    <string name="_1_minuto">1 minute</string>
+    <string name="_1_hora">1 hour</string>
+    <string name="minutos">%1$s minutes</string>
+    <string name="son_las">It is %1$s</string>
+    <string name="detener_servicio">STOP SERVICE</string>
+    <string name="iniciar_servicio">START SERVICE</string>
+    <string name="mantener_dispositivo_activo">Keep device active</string>
+    <string name="intervalo_de_anuncio">Announcement interval:</string>
+    <string name="canal_para_anuncios_peri_dicos_de_hora">Channel for periodic time announcements</string>
+    <string name="pr_ximo_anuncio">Next announcement: %1$s</string>
+    <string name="anunciador_de_hora_activo">Time announcer active</string>
+</resources>
