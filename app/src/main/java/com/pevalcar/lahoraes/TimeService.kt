@@ -90,7 +90,20 @@ class TimeService : Service() {
             .setSmallIcon(R.drawable.ic_launcher_foreground) // Ensure this icon exists
             .setContentTitle(getString(R.string.anunciador_de_hora_activo))
             .setContentText(getString(R.string.pr_ximo_anuncio) + calculateNextAnnouncementTime())
-            // ... (resto de la configuración igual)
+                        .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true) // Hacerla no descartable
+            .setShowWhen(false)
+            .setAutoCancel(false)
+            .setContentIntent(
+                PendingIntent.getActivity(
+                    this,
+                    0,
+                    Intent(this, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    },
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            )
             .build()
     }
 

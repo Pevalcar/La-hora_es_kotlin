@@ -267,7 +267,13 @@ private fun ServiceControls(
             )
             Switch(
                 checked = wakeLockEnabled,
-                onCheckedChange = { viewModel.updateWakeLock(it) }
+                onCheckedChange = {
+                    viewModel.updateWakeLock(it)
+                    if (serviceRunning) {
+                        context.stopService(Intent(context, TimeService::class.java))
+                        viewModel.updateServiceRunning(false)
+                    }
+                }
             )
         }
     }
