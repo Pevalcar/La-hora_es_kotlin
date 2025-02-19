@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">La Hora Es</string>
+    <string name="_1_minuto">1 minuto</string>
+    <string name="_1_hora">1 hora</string>
+    <string name="minutos">" Minutos"</string>
+    <string name="son_las">"Son las "</string>
+    <string name="detener_servicio">DETENER SERVICIO</string>
+    <string name="iniciar_servicio">INICIAR SERVICIO</string>
+    <string name="mantener_dispositivo_activo">Mantener dispositivo activo</string>
+    <string name="intervalo_de_anuncio">Intervalo de anuncio:</string>
+    <string name="canal_para_anuncios_peri_dicos_de_hora">Canal para anuncios periódicos de hora</string>
+    <string name="pr_ximo_anuncio">"Próximo anuncio: "</string>
+    <string name="anunciador_de_hora_activo">Anunciador de hora activo</string>
+    <string name="_24_horas">24 horas</string>
+    <string name="_12_horas">12 horas</string>
 </resources>
