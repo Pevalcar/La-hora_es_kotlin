@@ -13,4 +13,7 @@
     <string name="anunciador_de_hora_activo">Anunciador de hora activo</string>
     <string name="_24_horas">24 horas</string>
     <string name="_12_horas">12 horas</string>
+    <string name="nueva_actualizacion">Nueva Actualizacion</string>
+    <string name="por_favor_actualiza_la_app">Por favor actualiza la app</string>
+    <string name="actualizar">Actualizar</string>
 </resources>

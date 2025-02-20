@@ -2,15 +2,21 @@ package com.pevalcar.lahoraes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pevalcar.lahoraes.domain.CanAccesToApp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class TimeAnnouncerViewModel : ViewModel() {
+
+    private var canAccesToApp: CanAccesToApp = CanAccesToApp()
+
 
     private val _wakeLockEnabled = MutableStateFlow(false)
     val wakeLockEnabled: StateFlow<Boolean> = _wakeLockEnabled
@@ -26,6 +32,9 @@ class TimeAnnouncerViewModel : ViewModel() {
     private val _use24HourFormat = MutableStateFlow(TimeSettingsRepository.getTimeFormat())
     val use24HourFormat: StateFlow<Boolean> = _use24HourFormat
 
+    private val _blockVersion: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val blockVersion: StateFlow<Boolean> = _blockVersion
+
     fun updateSelectedInterval(interval: Int) {
         require(interval in availableIntervals) { "Intervalo no válido" }
         _selectedInterval.value = interval
@@ -39,7 +48,18 @@ class TimeAnnouncerViewModel : ViewModel() {
     }
 
     init {
+
         startTimeUpdates()
+        checkUserVersion()
+    }
+
+    private fun checkUserVersion() {
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                canAccesToApp()
+            }
+            _blockVersion.value = !result
+        }
     }
 
     private fun startTimeUpdates() {
