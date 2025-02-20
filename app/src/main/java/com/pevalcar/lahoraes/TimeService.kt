@@ -56,6 +56,23 @@ class TimeService : Service() {
         }
     }
 
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val initialInterval = intent?.getIntExtra("interval", 5) ?: 5
+        val initialFormat = intent?.getBooleanExtra("use24Format", true) ?: true
+        TimeSettingsRepository.updateInterval(initialInterval)
+        TimeSettingsRepository.updateTimeFormat(initialFormat)
+        currentInterval = intent?.getIntExtra("interval", 600000) ?: 600000
+        val useWakeLock = intent?.getBooleanExtra("wakeLock", false) ?: false
+
+        initializeTTS()
+        setupWakeLock(useWakeLock)
+        startForeground()
+        scheduleAnnouncements()
+
+        return START_STICKY
+    }
+
     override fun onCreate() {
         super.onCreate()
         // Registrar receptor de broadcast
@@ -87,10 +104,10 @@ class TimeService : Service() {
 
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, "time_channel")
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // Ensure this icon exists
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(getString(R.string.anunciador_de_hora_activo))
             .setContentText(getString(R.string.pr_ximo_anuncio) + calculateNextAnnouncementTime())
-                        .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true) // Hacerla no descartable
             .setShowWhen(false)
             .setAutoCancel(false)
@@ -107,21 +124,6 @@ class TimeService : Service() {
             .build()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val initialInterval = intent?.getIntExtra("interval", 5) ?: 5
-        val initialFormat = intent?.getBooleanExtra("use24Format", true) ?: true
-        TimeSettingsRepository.updateInterval(initialInterval)
-        TimeSettingsRepository.updateTimeFormat(initialFormat)
-        currentInterval = intent?.getIntExtra("interval", 600000) ?: 600000
-        val useWakeLock = intent?.getBooleanExtra("wakeLock", false) ?: false
-
-        initializeTTS()
-        setupWakeLock(useWakeLock)
-        startForeground()
-        scheduleAnnouncements()
-
-        return START_STICKY
-    }
 
     private fun initializeTTS() {
         val currentTime = getCurrentTime()
@@ -146,27 +148,9 @@ class TimeService : Service() {
     }
 
     private fun startForeground() {
-        val notification = NotificationCompat.Builder(this, "time_channel")
-            .setContentTitle(getString(R.string.anunciador_de_hora_activo))
-            .setContentText(getString(R.string.pr_ximo_anuncio) + calculateNextAnnouncementTime())
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true) // Hacerla no descartable
-            .setShowWhen(false)
-            .setAutoCancel(false)
-            .setContentIntent(
-                PendingIntent.getActivity(
-                    this,
-                    0,
-                    Intent(this, MainActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    },
-                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            )
 
-            .build()
         createNotificationChannel()
+        val notification = createNotification()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
@@ -184,7 +168,6 @@ class TimeService : Service() {
         return SimpleDateFormat("HH:mm", Locale.getDefault()).format(now.time)
     }
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val channel = NotificationChannel(
                 "time_channel",
                 "Anuncios de hora",
@@ -195,7 +178,7 @@ class TimeService : Service() {
             }
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
-        }
+
     }
 
     private fun scheduleAnnouncements() {

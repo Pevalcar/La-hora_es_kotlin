@@ -7,9 +7,6 @@ plugins {
 }
 
 android {
-    signingConfigs {
-
-    }
     namespace = "com.pevalcar.lahoraes"
     compileSdk = 34
 
@@ -17,19 +14,19 @@ android {
         applicationId = "com.pevalcar.lahoraes"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
+        versionCode = 2
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
-        signingConfig = signingConfigs.getByName("release")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -67,7 +64,6 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation (libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
     implementation(libs.play.services.ads)
     testImplementation(libs.junit)
