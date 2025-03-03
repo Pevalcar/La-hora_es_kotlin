@@ -48,9 +48,9 @@ class TimeAnnouncerViewModel @Inject constructor(
     }
 
     fun toggleTimeFormat() {
-        val newFormat = !_use24HourFormat.value
-        _use24HourFormat.value = newFormat
-        timeSettingsRepository.updateTimeFormat(newFormat)
+        stopService()
+        _use24HourFormat.value = !_use24HourFormat.value
+        timeSettingsRepository.updateTimeFormat(!_use24HourFormat.value)
     }
 
     init {
@@ -85,13 +85,21 @@ class TimeAnnouncerViewModel @Inject constructor(
             timeServiceUseCase.startService(
                 interval = selectedInterval.value,
                 use24Format = use24HourFormat.value,
-                wakeLock = wakeLockEnabled.value
+                wakeLockEnabled = wakeLockEnabled.value
             )
         }
         _serviceRunning.value = !serviceRunning.value
     }
 
+    private fun stopService() {
+        if (serviceRunning.value) {
+            timeServiceUseCase.stopService()
+            _serviceRunning.value = !serviceRunning.value
+        }
+    }
+
     fun updateWakeLock(enabled: Boolean) {
+        stopService()
         timeSettingsRepository.setWakeLockState(enabled)
         _wakeLockEnabled.value = enabled
     }

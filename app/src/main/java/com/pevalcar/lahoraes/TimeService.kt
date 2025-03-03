@@ -16,6 +16,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.speech.tts.TextToSpeech
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -27,9 +28,11 @@ class TimeService : Service() {
     private var tts: TextToSpeech? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private val handler = Handler(Looper.getMainLooper())
-    lateinit var timeSettingsRepository: TimeSettingsRepository
     private var lastAnnouncedTime: String = ""
-    private var currentInterval: Int = 600000
+    private var currentInterval: Int = 600000 // 60 minutos
+    private var timeFormat: Boolean = true
+
+
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
 
@@ -43,10 +46,10 @@ class TimeService : Service() {
             override fun run() {
                 val now = Calendar.getInstance()
                 val currentMinute = now.get(Calendar.MINUTE)
-                val interval = timeSettingsRepository.getInterval()
-                val currentTime = getCurrentTime()
+
+                val currentTime = getCurrentTime(Date())
                 // Verificar si estamos en un minuto exacto del intervalo
-                if (currentMinute % interval == 0 && currentTime != lastAnnouncedTime) {
+                if (currentMinute % currentInterval == 0 && currentTime != lastAnnouncedTime) {
                     announceCurrentTime()
                     lastAnnouncedTime = currentTime
                 }
@@ -59,20 +62,18 @@ class TimeService : Service() {
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val interval = timeSettingsRepository.getInterval()
-        val use24Format = timeSettingsRepository.getTimeFormat()
-        val wakeLock = timeSettingsRepository.getWakeLockState()
-        val initialInterval = intent?.getIntExtra("interval", 5) ?: 5
-        val initialFormat = intent?.getBooleanExtra("use24Format", true) ?: true
-        timeSettingsRepository.updateInterval(initialInterval)
-        timeSettingsRepository.updateTimeFormat(initialFormat)
+        val wakeLock = intent?.getBooleanExtra("wakeLock", false) ?: false
         currentInterval = intent?.getIntExtra("interval", 600000) ?: 600000
-        val useWakeLock = intent?.getBooleanExtra("wakeLock", false) ?: false
-
+        timeFormat = intent?.getBooleanExtra("use24Format", true) ?: true
         initializeTTS()
-        setupWakeLock(useWakeLock)
+        setupWakeLock(wakeLock)
         startForeground()
         scheduleAnnouncements()
+        Log.i(
+            "Pevalcar-TimeService",
+            "onStartCommand , wakeLock: ${wakeLock} , interval: ${currentInterval} , timeFormat: ${timeFormat}"
+        )
+
 
         return START_STICKY
     }
@@ -80,7 +81,6 @@ class TimeService : Service() {
     override fun onCreate() {
         super.onCreate()
         // Registrar receptor de broadcast
-        timeSettingsRepository = TimeSettingsRepository.getInstance()
         val filter = IntentFilter().apply {
             addAction("ACTION_SPEAK_NOW")
         }
@@ -96,11 +96,11 @@ class TimeService : Service() {
     }
 
     private fun announceCurrentTime() {
-        val pattern = if (timeSettingsRepository.getTimeFormat()) "HH:mm" else "hh:mm a"
-        val time = SimpleDateFormat(pattern, Locale.getDefault()).format(Date())
+        val time = getCurrentTime(Date())
         speakTime(time)
         updateNotification() // Actualizar notificación con próximo horario
     }
+
     private fun updateNotification() {
         val notification = createNotification()
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -131,7 +131,7 @@ class TimeService : Service() {
 
 
     private fun initializeTTS() {
-        val currentTime = getCurrentTime()
+        val currentTime = getCurrentTime(Date())
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 tts?.language = Locale.getDefault()
@@ -163,26 +163,27 @@ class TimeService : Service() {
             startForeground(1, notification)
         }
     }
+
     private fun calculateNextAnnouncementTime(): String {
         val now = Calendar.getInstance()
-        val interval = timeSettingsRepository.getInterval()
         val currentMinutes = now.get(Calendar.MINUTE)
-        val nextMinutes = ((currentMinutes / interval) + 1) * interval
+        val nextMinutes = ((currentMinutes / currentInterval) + 1) * currentInterval
         now.set(Calendar.MINUTE, nextMinutes % 60)
         now.add(Calendar.HOUR, nextMinutes / 60)
-        return SimpleDateFormat("HH:mm", Locale.getDefault()).format(now.time)
+        return getCurrentTime(now.time)
     }
+
     private fun createNotificationChannel() {
-            val channel = NotificationChannel(
-                "time_channel",
-                "Anuncios de hora",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = getString(R.string.canal_para_anuncios_peri_dicos_de_hora)
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            }
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
+        val channel = NotificationChannel(
+            "time_channel",
+            "Anuncios de hora",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = getString(R.string.canal_para_anuncios_peri_dicos_de_hora)
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        }
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(channel)
 
     }
 
@@ -190,8 +191,10 @@ class TimeService : Service() {
         handler.post(runnable) // Iniciar el ciclo
     }
 
-    private fun getCurrentTime(): String {
-        return SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+    private fun getCurrentTime(time: Date): String {
+        return SimpleDateFormat(if (timeFormat) "HH:mm" else "hh:mm a", Locale.getDefault()).format(
+            time
+        )
     }
 
     private fun speakTime(time: String) {

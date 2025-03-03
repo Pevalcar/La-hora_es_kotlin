@@ -12,8 +12,16 @@ import androidx.core.content.ContextCompat
 class TimeServiceUseCase @Inject constructor(
     private val context: Context,
 ) {
-    fun startService(interval: Int, use24Format: Boolean, wakeLock: Boolean) {
-        val serviceIntent = Intent(context, TimeService::class.java)
+    fun startService(
+        interval: Int,
+        use24Format: Boolean,
+        wakeLockEnabled: Boolean
+    ) {
+        val serviceIntent = Intent(context, TimeService::class.java).apply {
+            putExtra("interval", interval)
+            putExtra("use24Format", use24Format)
+            putExtra("wakeLock", wakeLockEnabled)
+        }
         ContextCompat.startForegroundService(context, serviceIntent)
     }
 
