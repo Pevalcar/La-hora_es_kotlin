@@ -6,19 +6,12 @@ import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 import com.pevalcar.lahoraes.LHoraEsAoo.Companion.context
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class AccesAppRepo {
-
-    companion object {
-        const val MIN_VERSION = "min_version"
-    }
-
-    val remoteConfig: FirebaseRemoteConfig = Firebase.remoteConfig.apply {
-        setConfigSettingsAsync(remoteConfigSettings {
-            minimumFetchIntervalInSeconds = 30
-        })
-        fetchAndActivate()
-    }
+class AccesAppRepo @Inject constructor(
+    private val remoteConfig: FirebaseRemoteConfig
+) {
+    private val MIN_VERSION = "min_version"
 
     fun getCurrentVersion(): List<Int> {
         return try {

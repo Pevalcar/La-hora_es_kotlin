@@ -1,7 +1,6 @@
 // Clase principal de la actividad que sirve como punto de entrada de la aplicación
 package com.pevalcar.lahoraes
 
-import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -16,24 +15,20 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -52,14 +47,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pevalcar.lahoraes.ui.theme.LaHoraEsTheme
+import dagger.hilt.android.AndroidEntryPoint
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 // Actividad principal que hereda de ComponentActivity (base para actividades con Compose)
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,25 +94,28 @@ fun TimeAnnouncerApp(viewModel: TimeAnnouncerViewModel = viewModel()) {
     val blockVersion by viewModel.blockVersion.collectAsState()
 
     if (blockVersion) {
-        Dialog(onDismissRequest = {  },
+        Dialog(
+            onDismissRequest = { },
             properties = DialogProperties(
                 dismissOnBackPress = false,
                 dismissOnClickOutside = false
-            )) {
+            )
+        ) {
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                         .height(300.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = stringResource(R.string.nueva_actualizacion),
-                        fontSize = 22.sp,
+                        fontSize = 28.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = stringResource(R.string.por_favor_actualiza_la_app),
                         fontSize = 18.sp,
@@ -124,7 +123,8 @@ fun TimeAnnouncerApp(viewModel: TimeAnnouncerViewModel = viewModel()) {
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.weight(1f))
-                    Button(onClick = {naviteToMarket(context)
+                    Button(onClick = {
+                        naviteToMarket(context)
                     }) {
                         Text(text = stringResource(R.string.actualizar))
                     }
@@ -291,18 +291,7 @@ private fun ServiceControls(
         // Botón principal de control del servicio
         Button(
             onClick = {
-                if (serviceRunning) {
-                    context.stopService(Intent(context, TimeService::class.java))
-                    viewModel.updateServiceRunning(false)
-                } else {
-                    val serviceIntent = Intent(context, TimeService::class.java).apply {
-                        putExtra("interval", viewModel.selectedInterval.value)
-                        putExtra("use24Format", viewModel.use24HourFormat.value)
-                        putExtra("wakeLock", wakeLockEnabled)
-                    }
-                    ContextCompat.startForegroundService(context, serviceIntent)
-                    viewModel.updateServiceRunning(true)
-                }
+                viewModel.toggleService()
             },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
@@ -331,10 +320,7 @@ private fun ServiceControls(
                 checked = wakeLockEnabled,
                 onCheckedChange = {
                     viewModel.updateWakeLock(it)
-                    if (serviceRunning) {
-                        context.stopService(Intent(context, TimeService::class.java))
-                        viewModel.updateServiceRunning(false)
-                    }
+
                 }
             )
         }
@@ -351,7 +337,7 @@ fun naviteToMarket(context: Context) {
             )
         )
     } catch (e: ActivityNotFoundException) {
-        Log.e( "Pevalcar-naviteToMarket", "${e.message}")
+        Log.e("Pevalcar-naviteToMarket", "${e.message}")
         context.startActivity(
             Intent(
                 Intent.ACTION_VIEW,

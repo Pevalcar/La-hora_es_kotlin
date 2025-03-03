@@ -3,6 +3,8 @@ package com.pevalcar.lahoraes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pevalcar.lahoraes.domain.CanAccesToApp
+import com.pevalcar.lahoraes.usecase.TimeServiceUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,10 +14,14 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 
-class TimeAnnouncerViewModel : ViewModel() {
-
-    private var canAccesToApp: CanAccesToApp = CanAccesToApp()
+@HiltViewModel
+class TimeAnnouncerViewModel @Inject constructor(
+    private val timeSettingsRepository: TimeSettingsRepository,
+    private val canAccesToApp: CanAccesToApp,
+    private val timeServiceUseCase: TimeServiceUseCase,
+) : ViewModel() {
 
 
     private val _wakeLockEnabled = MutableStateFlow(false)
@@ -27,9 +33,9 @@ class TimeAnnouncerViewModel : ViewModel() {
     val currentTime: StateFlow<String> = _currentTime
     val availableIntervals = listOf(1, 5, 10, 15, 30, 60)
 
-    private val _selectedInterval = MutableStateFlow(TimeSettingsRepository.getInterval())
+    private val _selectedInterval = MutableStateFlow(timeSettingsRepository.getInterval())
     val selectedInterval: StateFlow<Int> = _selectedInterval
-    private val _use24HourFormat = MutableStateFlow(TimeSettingsRepository.getTimeFormat())
+    private val _use24HourFormat = MutableStateFlow(timeSettingsRepository.getTimeFormat())
     val use24HourFormat: StateFlow<Boolean> = _use24HourFormat
 
     private val _blockVersion: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -38,13 +44,13 @@ class TimeAnnouncerViewModel : ViewModel() {
     fun updateSelectedInterval(interval: Int) {
         require(interval in availableIntervals) { "Intervalo no válido" }
         _selectedInterval.value = interval
-        TimeSettingsRepository.updateInterval(interval)
+        timeSettingsRepository.updateInterval(interval)
     }
 
     fun toggleTimeFormat() {
         val newFormat = !_use24HourFormat.value
         _use24HourFormat.value = newFormat
-        TimeSettingsRepository.updateTimeFormat(newFormat)
+        timeSettingsRepository.updateTimeFormat(newFormat)
     }
 
     init {
@@ -56,7 +62,7 @@ class TimeAnnouncerViewModel : ViewModel() {
     private fun checkUserVersion() {
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                canAccesToApp()
+                canAccesToApp.invoke()
             }
             _blockVersion.value = !result
         }
@@ -72,13 +78,23 @@ class TimeAnnouncerViewModel : ViewModel() {
         }
     }
 
+    fun toggleService() {
+        if (serviceRunning.value) {
+            timeServiceUseCase.stopService()
+        } else {
+            timeServiceUseCase.startService(
+                interval = selectedInterval.value,
+                use24Format = use24HourFormat.value,
+                wakeLock = wakeLockEnabled.value
+            )
+        }
+        _serviceRunning.value = !serviceRunning.value
+    }
 
     fun updateWakeLock(enabled: Boolean) {
+        timeSettingsRepository.setWakeLockState(enabled)
         _wakeLockEnabled.value = enabled
     }
 
-    fun updateServiceRunning(running: Boolean) {
-        _serviceRunning.value = running
-    }
 
 }
